@@ -1,5 +1,6 @@
 import datetime
 import os
+import pathlib
 import six
 import webbrowser
 from django.conf import settings
@@ -20,7 +21,14 @@ class NaomiBackend(EmailBackend):
         if hasattr(message, 'attachments') and message.attachments:
             temporary_path = settings.EMAIL_FILE_PATH
             for attachment in message.attachments:
-                new_file = open(os.path.join(temporary_path, attachment.name), 'wb+')
+                if '/' in attachment:
+                    file_parts = attachment.split('/')
+                    full_path = os.path.join(temporary_path,
+                                             '/'.join(file_parts[:-1]))
+                    pathlib.Path(full_path).mkdir(parents=True, exist_ok=True)
+
+                new_file = open(os.path.join(
+                    temporary_path, attachment.name), 'wb+')
                 new_file.write(attachment.read())
                 attachments.append([attachment.name, new_file.name])
                 new_file.close()
